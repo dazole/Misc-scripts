@@ -31,7 +31,7 @@ print_help () {
   echo "        $1 [-h|--help]"
   echo "        $1 [-v|--version]"
   echo
-  echo "   ex.  ${BLUE}$1 lxrobot${NORMAL}"
+  echo "   ex.  ${BLUE}$1 someaccount${NORMAL}"
   exit 1
 }
 
