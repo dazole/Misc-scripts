@@ -5,3 +5,4 @@ Misc scripts I write
   access to the server the script is run on.  Requires pam_ldap and pam_access.
   Similar to "vastool user checkaccess $account".
 
+- git_hooks:  Git hooks I use with gitlab.

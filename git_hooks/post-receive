@@ -1,0 +1,96 @@
+#!/usr/bin/env ruby
+# post-receive
+#
+# Some variables
+$VERBOSE = nil # because I don't know what I'm doing.
+
+PuppetMasters = Hash.new
+PuppetMasters['DC1'] = ['server1',
+                          'server2',
+                       ]
+PuppetMasters['DC2'] = ['server3',
+                          'server4',
+                      ]
+
+RemoteDir = "/some/git/repo"
+
+# We like pretty colors
+class String
+  # colorization
+  def colorize(color_code)
+    "\e[#{color_code}m#{self}\e[0m"
+  end
+
+  def norm
+    colorize(0)
+  end
+
+  def red
+    colorize(31)
+  end
+
+  def green
+    colorize(32)
+  end
+
+  def blue
+    colorize(34)
+  end
+
+  def black
+    colorize(30)
+  end
+end
+
+
+# Read STDIN (Format: "from_commit to_commit branch_name")
+ARGF.each do |e|
+  from, To, branch = e.split " "
+
+
+# Only deploy if master branch was pushed
+  if (branch =~ /master$/) == nil
+    puts "Received branch #{branch}, not deploying.".blue
+    exit
+  end
+
+# Copy files to deploy server/directory
+  def deploy_to(dc,goodmaster)
+    deploy_Result=`ssh -q -o ConnectTimeout=10 puppet@#{goodmaster} "cd #{RemoteDir} && git fetch --all &&  git reset --hard origin/master" 2>/dev/null`
+    deploy_Status = $?.exitstatus
+
+    case deploy_Status
+    when 0
+      puts "DEPLOY:".blue + " master".black + "(#{To})".green + " copied to #{goodmaster}".blue
+    when 1
+      puts "Something went very wrong, Please check #{goodmaster}!!".red
+      puts "#{deploy_Result}".red
+    end
+  end
+
+  PuppetMasters.each_key do |dc|
+
+# Test to make sure we can connect and RemoteDir exists.  We check for the README.md file.
+# Test each DC in order
+# Test each server in each DC in order
+
+    PuppetMasters[dc].each do |server_check|
+      ssh_Test=`ssh -q -o ConnectTimeout=2 puppet@#{server_check} "cd #{RemoteDir} && cat README.md > /dev/null" 2>&1 > /dev/null`
+      ssh_Test_Result=$?.exitstatus
+      case ssh_Test_Result
+      when 0
+        puts "Connection test was a success, will deploy to #{dc}: #{server_check}".green
+        Good_master = server_check
+      else
+        puts "There was a problem with #{server_check}!!  Trying the next one !!".red
+        puts "#{ssh_Test}".red
+      end
+      if Good_master
+        deploy_to(dc,Good_master)
+        break
+      end
+    end
+  end
+end
+
+
