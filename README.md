@@ -6,3 +6,6 @@ Misc scripts I write
   Similar to "vastool user checkaccess $account".
 
 - git_hooks:  Git hooks I use with gitlab.
+
+- AD_unix_enable: Unix-enable a user via powershell.
+
